@@ -1,15 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { EstadoPill } from "@/components/estado-pill";
 import { requireUser } from "@/lib/auth";
-import { diaLocal, formatFechaHora, iniciales, TAMANOS, type Tamano } from "@/lib/dominio";
+import { formatFechaHora, iniciales, TAMANOS, type Tamano } from "@/lib/dominio";
 import { formatPesos } from "@/lib/format";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createClient } from "@/lib/supabase/server";
 import { ClienteEditor } from "../cliente-editor";
 import { Copiar } from "../copiar";
 import { VehiculoEditor } from "../vehiculo-editor";
+import { Historial } from "./historial";
 
 export const metadata: Metadata = { title: "Ficha de cliente" };
 
@@ -75,64 +75,51 @@ export default async function Page({ params }: PageProps<"/clientes/[id]">) {
         </div>
       </section>
 
-      <div className="grid items-start gap-6 lg:grid-cols-2">
-        {vehiculos.data.map((v) => {
-          const historial = conTotal.filter((t) => t.vehiculo_id === v.id);
-          return (
-            <section key={v.id} className="flex flex-col gap-2.5">
-              <div className="flex items-center justify-between gap-3">
-                <h2 className="min-w-0 font-display text-lg leading-none font-bold tracking-wide uppercase">
-                  {v.matricula}
-                  <span className="ml-2 font-sans text-[13px] font-normal tracking-normal text-muted normal-case">
-                    {v.marca_modelo || "Sin modelo"} · {TAMANOS[v.tamano as Tamano] ?? v.tamano}
-                  </span>
-                </h2>
-                <VehiculoEditor clienteId={c.id} vehiculo={v} />
-              </div>
-              {historial.length ? (
-                historial.map((t) => (
-                  <article
-                    key={t.id}
-                    className={`flex items-start gap-3 rounded-xl border border-line bg-surface px-3.5 py-3 ${t.estado === "cancelado" ? "opacity-55" : ""}`}
-                  >
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[13px] text-muted" title={diaLocal(t.inicio)}>
-                        {formatFechaHora(t.inicio)}
-                      </p>
-                      <ul className="mt-1 flex flex-col gap-0.5 text-sm">
-                        {t.turno_items.map((i, n) => {
-                          const nombre = i.combos?.nombre ?? i.categorias?.nombre ?? "Servicio";
-                          return (
-                            <li key={n} className="flex items-center gap-2">
-                              <span className="flex flex-none gap-0.5">
-                                {(i.combos ? i.turno_item_categorias.map((x) => x.categorias?.color) : [i.categorias?.color]).map((color, k) => (
-                                  <span key={k} className="size-[9px] rounded-full" style={{ backgroundColor: color ?? "#8c919c" }} />
-                                ))}
-                              </span>
-                              {nombre}
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    </div>
-                    <div className="flex flex-col items-end gap-1.5">
-                      <span className={`font-display text-lg leading-none font-bold tabular-nums ${t.estado === "cancelado" ? "line-through" : ""}`}>
-                        {formatPesos(t.total)}
-                      </span>
-                      <EstadoPill estado={t.estado} />
-                    </div>
-                  </article>
-                ))
-              ) : (
-                <p className="rounded-xl border border-dashed border-line p-4 text-center text-sm text-muted">Sin historial todavía.</p>
-              )}
-            </section>
-          );
-        })}
-        <div className="lg:col-span-2">
+      <section className="flex flex-col gap-3">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="font-display text-lg leading-none font-bold tracking-wide uppercase">Vehículos</h2>
           <VehiculoEditor clienteId={c.id} />
         </div>
-      </div>
+        <div className="grid gap-2.5 lg:grid-cols-2 xl:grid-cols-3">
+          {vehiculos.data.map((v) => {
+            const propios = realizados.filter((t) => t.vehiculo_id === v.id);
+            return (
+              <div key={v.id} className="flex items-center gap-3 rounded-xl border border-line bg-surface px-3.5 py-3">
+                <div className="min-w-0 flex-1">
+                  <p className="font-display text-lg leading-none font-bold tracking-wide uppercase">{v.matricula}</p>
+                  <p className="mt-1 truncate text-[13px] text-muted">
+                    {v.marca_modelo || "Sin modelo"} · {TAMANOS[v.tamano as Tamano] ?? v.tamano}
+                  </p>
+                  <p className="mt-0.5 text-[12px] text-muted tabular-nums">
+                    {propios.length} {propios.length === 1 ? "visita" : "visitas"} · {formatPesos(propios.reduce((s, t) => s + t.total, 0))}
+                  </p>
+                </div>
+                <VehiculoEditor clienteId={c.id} vehiculo={v} />
+              </div>
+            );
+          })}
+          {!vehiculos.data.length && (
+            <p className="rounded-xl border border-dashed border-line p-4 text-center text-sm text-muted lg:col-span-2 xl:col-span-3">
+              Este cliente todavía no tiene vehículos. Agregá el primero con “+ Vehículo”.
+            </p>
+          )}
+        </div>
+      </section>
+
+      <Historial
+        vehiculos={vehiculos.data.map((v) => ({ id: v.id, matricula: v.matricula }))}
+        turnos={conTotal.map((t) => ({
+          id: t.id,
+          vehiculoId: t.vehiculo_id,
+          fecha: formatFechaHora(t.inicio),
+          estado: t.estado,
+          total: formatPesos(t.total),
+          items: t.turno_items.map((i) => ({
+            nombre: i.combos?.nombre ?? i.categorias?.nombre ?? "Servicio",
+            colores: (i.combos ? i.turno_item_categorias.map((x) => x.categorias?.color) : [i.categorias?.color]).map((c) => c ?? "#8c919c"),
+          })),
+        }))}
+      />
     </>
   );
 }

@@ -6,14 +6,16 @@ import { btnPrimaryCls, btnSmCls, Field, FormError, inputCls } from "@/component
 import { TAMANOS } from "@/lib/dominio";
 import { guardarVehiculo, type FormState } from "./actions";
 
+const nuevoCls = "inline-flex min-h-9 items-center justify-center rounded-[10px] border border-brand bg-brand px-3 text-sm font-semibold text-brand-ink";
+
 export type VehiculoDatos = { id: number; matricula: string; marca_modelo: string; tamano: string };
 
 export function VehiculoEditor({ clienteId, vehiculo }: { clienteId: number; vehiculo?: VehiculoDatos }) {
   return (
     <Modal
       title={vehiculo ? "Editar vehículo" : "Nuevo vehículo"}
-      trigger={vehiculo ? "Editar" : "+ Agregar vehículo"}
-      triggerClassName={vehiculo ? btnSmCls : `${btnSmCls} min-h-11 w-full`}
+      trigger={vehiculo ? "Editar" : "+ Vehículo"}
+      triggerClassName={vehiculo ? btnSmCls : nuevoCls}
     >
       {(close) => <VehiculoForm clienteId={clienteId} vehiculo={vehiculo} close={close} />}
     </Modal>
