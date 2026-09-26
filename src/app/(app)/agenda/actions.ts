@@ -2,8 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
-import { aInstante, fechaValida } from "@/lib/agenda";
-import { MEDIOS_PAGO } from "@/lib/dominio";
+import { aInstante, fechaValida, horaLocal } from "@/lib/agenda";
+import { MEDIOS_PAGO, normalizarMatricula, TAMANOS } from "@/lib/dominio";
 import { createClient } from "@/lib/supabase/server";
 
 export type FormState = { ok?: true; error?: string; fecha?: string };
@@ -99,4 +99,88 @@ export async function cambiarEstado(id: number, estado: CambioEstado, medioPago?
 
   revalidatePath("/agenda");
   return { ok: true };
+}
+
+/** Ventana (en minutos) dentro de la cual otro turno se considera cercano. */
+const VENTANA_CONFLICTO_MIN = 30;
+
+export type Conflicto = { hora: string; matricula: string; cliente: string };
+
+/** Turnos no cancelados que empiezan a menos de 30 minutos del horario pedido. Solo avisa: no bloquea. */
+export async function buscarConflictos(fecha: string, hora: string, excluirId?: number): Promise<Conflicto[]> {
+  if (!(await requireUser())) return [];
+  if (!fechaValida(fecha, "") || !HORA.test(hora)) return [];
+
+  const centro = new Date(aInstante(fecha, hora)).getTime();
+  const margen = VENTANA_CONFLICTO_MIN * 60_000;
+  const supabase = await createClient();
+  let q = supabase
+    .from("turnos")
+    .select("id, inicio, vehiculos ( matricula, clientes ( nombre ) )")
+    .neq("estado", "cancelado")
+    .gt("inicio", new Date(centro - margen).toISOString())
+    .lt("inicio", new Date(centro + margen).toISOString())
+    .order("inicio");
+  if (excluirId) q = q.neq("id", excluirId);
+
+  const { data } = await q;
+  return (data ?? []).map((t) => ({
+    hora: horaLocal(t.inicio),
+    matricula: t.vehiculos?.matricula ?? "",
+    cliente: t.vehiculos?.clientes?.nombre ?? "",
+  }));
+}
+
+export type VehiculoNuevo = { id: number; matricula: string; modelo: string; tamano: string; cliente: string; clienteId: number };
+export type AltaRapida = {
+  clienteId?: number;
+  nombre?: string;
+  telefono?: string;
+  matricula: string;
+  marcaModelo: string;
+  tamano: string;
+};
+
+/** Da de alta un vehículo (y su cliente si es nuevo) sin salir del formulario del turno. */
+export async function altaRapida(datos: AltaRapida): Promise<{ error?: string; vehiculo?: VehiculoNuevo }> {
+  if (!(await requireUser())) return { error: "Sin sesión." };
+
+  const matricula = normalizarMatricula(datos.matricula ?? "");
+  if (!matricula) return { error: "Poné la matrícula." };
+  if (!(datos.tamano in TAMANOS)) return { error: "Elegí un tamaño válido." };
+  const modelo = (datos.marcaModelo ?? "").trim();
+  const repetida = "Ya hay un vehículo con esa matrícula.";
+
+  const supabase = await createClient();
+  let clienteId = datos.clienteId;
+
+  if (!clienteId) {
+    const nombre = (datos.nombre ?? "").trim();
+    if (!nombre) return { error: "Poné el nombre del cliente." };
+    const { data, error } = await supabase.rpc("crear_cliente", {
+      p_nombre: nombre,
+      p_telefono: (datos.telefono?.trim() || null) as string,
+      p_notas: null as unknown as string,
+      p_matricula: matricula,
+      p_marca_modelo: modelo,
+      p_tamano: datos.tamano,
+    });
+    if (error) return { error: error.code === "23505" ? repetida : ERROR_GENERICO };
+    clienteId = data;
+    const v = await supabase.from("vehiculos").select("id, matricula, marca_modelo, tamano, clientes ( nombre )").eq("cliente_id", clienteId).single();
+    if (v.error) return { error: ERROR_GENERICO };
+    revalidatePath("/clientes", "layout");
+    revalidatePath("/agenda");
+    return { vehiculo: { id: v.data.id, matricula: v.data.matricula, modelo: v.data.marca_modelo, tamano: v.data.tamano, cliente: v.data.clientes?.nombre ?? "", clienteId } };
+  }
+
+  const { data, error } = await supabase
+    .from("vehiculos")
+    .insert({ cliente_id: clienteId, matricula, marca_modelo: modelo, tamano: datos.tamano })
+    .select("id, matricula, marca_modelo, tamano, clientes ( nombre )")
+    .single();
+  if (error) return { error: error.code === "23505" ? repetida : ERROR_GENERICO };
+  revalidatePath("/clientes", "layout");
+  revalidatePath("/agenda");
+  return { vehiculo: { id: data.id, matricula: data.matricula, modelo: data.marca_modelo, tamano: data.tamano, cliente: data.clientes?.nombre ?? "", clienteId } };
 }

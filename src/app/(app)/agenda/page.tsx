@@ -59,7 +59,7 @@ export default async function Page({ searchParams }: PageProps<"/agenda">) {
   const dias = Array.from({ length: 7 }, (_, i) => sumarDias(lunes, i));
 
   const supabase = await createClient();
-  const [turnosRes, categoriasRes, combosRes, vehiculosRes] = await Promise.all([
+  const [turnosRes, categoriasRes, combosRes, vehiculosRes, clientesRes] = await Promise.all([
     supabase
       .from("turnos")
       .select(SELECT_TURNOS)
@@ -68,9 +68,10 @@ export default async function Page({ searchParams }: PageProps<"/agenda">) {
       .order("inicio"),
     supabase.from("categorias").select("id, nombre, color, precio_referencia").eq("activa", true).order("nombre"),
     supabase.from("combos").select("id, nombre, precio_referencia, combo_categorias ( categorias ( color ) )").eq("activo", true).order("nombre"),
-    supabase.from("vehiculos").select("id, matricula, marca_modelo, tamano, clientes ( nombre )").order("matricula"),
+    supabase.from("vehiculos").select("id, matricula, marca_modelo, tamano, cliente_id, clientes ( nombre )").order("matricula"),
+    supabase.from("clientes").select("id, nombre").order("nombre"),
   ]);
-  for (const r of [turnosRes, categoriasRes, combosRes, vehiculosRes]) {
+  for (const r of [turnosRes, categoriasRes, combosRes, vehiculosRes, clientesRes]) {
     if (r.error) throw new Error(`No se pudo leer la agenda: ${r.error.message}`);
   }
 
@@ -121,7 +122,9 @@ export default async function Page({ searchParams }: PageProps<"/agenda">) {
       modelo: v.marca_modelo,
       tamano: v.tamano,
       cliente: v.clientes?.nombre ?? "",
+      clienteId: v.cliente_id,
     })),
+    clientes: clientesRes.data!,
   };
 
   const porDia = new Map(dias.map((d) => [d, turnos.filter((t) => t.dia === d)]));

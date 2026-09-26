@@ -3,10 +3,11 @@
 import { useActionState, useEffect, useState } from "react";
 import { btnPrimaryCls, Field, FormError, inputCls } from "@/components/form";
 import type { TurnoVista } from "@/lib/agenda";
-import { MEDIOS_PAGO, TAMANOS, type Tamano } from "@/lib/dominio";
+import { MEDIOS_PAGO } from "@/lib/dominio";
 import { formatPesos } from "@/lib/format";
-import { guardarTurno, type FormState } from "./actions";
+import { buscarConflictos, guardarTurno, type Conflicto, type FormState } from "./actions";
 import { useCatalogo } from "./catalogo";
+import { SelectorVehiculo } from "./selector-vehiculo";
 
 type ItemForm = {
   clave: string;
@@ -34,7 +35,7 @@ export function TurnoForm({ turno, fecha, close }: { turno?: TurnoVista; fecha?:
     if (state.ok) close();
   }, [state, close]);
 
-  const [vehiculoId, setVehiculoId] = useState(turno?.vehiculo.id ?? cat.vehiculos[0]?.id ?? 0);
+  const [vehiculoId, setVehiculoId] = useState(turno?.vehiculo.id ?? 0);
   const [items, setItems] = useState<ItemForm[]>(() =>
     (turno?.items ?? []).map((i, n) => ({
       clave: `e${n}`,
@@ -48,7 +49,23 @@ export function TurnoForm({ turno, fecha, close }: { turno?: TurnoVista; fecha?:
     })),
   );
 
-  const vehiculo = cat.vehiculos.find((v) => v.id === vehiculoId);
+  const [fechaSel, setFechaSel] = useState(turno?.dia ?? fecha ?? cat.hoy);
+  const [horaSel, setHoraSel] = useState(turno?.hora ?? "16:00");
+  const [conflictos, setConflictos] = useState<Conflicto[]>([]);
+
+  // Avisa si hay otro turno a menos de 30 minutos. No bloquea: el taller puede atender dos autos a la vez.
+  useEffect(() => {
+    if (!fechaSel || !horaSel) return;
+    let vigente = true;
+    const t = setTimeout(async () => {
+      const r = await buscarConflictos(fechaSel, horaSel, turno?.id);
+      if (vigente) setConflictos(r);
+    }, 300);
+    return () => {
+      vigente = false;
+      clearTimeout(t);
+    };
+  }, [fechaSel, horaSel, turno?.id]);
   const total = items.reduce((s, i) => s + (Number(i.precio) || 0), 0);
 
   const agregar = (i: Omit<ItemForm, "clave" | "nota" | "precio"> & { precio: number | null }) =>
@@ -65,24 +82,29 @@ export function TurnoForm({ turno, fecha, close }: { turno?: TurnoVista; fecha?:
       {turno && <input type="hidden" name="id" value={turno.id} />}
       <input type="hidden" name="items" value={payload} />
 
-      <Field label="Vehículo" htmlFor="t-veh" hint={vehiculo ? `Tamaño: ${TAMANOS[vehiculo.tamano as Tamano] ?? vehiculo.tamano}. ¿Cliente nuevo? Crealo primero en Clientes.` : undefined}>
-        <select id="t-veh" name="vehiculo_id" value={vehiculoId} onChange={(e) => setVehiculoId(Number(e.target.value))} className={inputCls}>
-          {cat.vehiculos.map((v) => (
-            <option key={v.id} value={v.id}>
-              {v.matricula} · {v.modelo || "Sin modelo"} — {v.cliente}
-            </option>
-          ))}
-        </select>
-      </Field>
+      <input type="hidden" name="vehiculo_id" value={vehiculoId} />
+      <SelectorVehiculo valor={vehiculoId} onChange={setVehiculoId} />
 
       <div className="grid grid-cols-2 gap-3">
         <Field label="Fecha" htmlFor="t-fecha">
-          <input id="t-fecha" name="fecha" type="date" required defaultValue={turno?.dia ?? fecha ?? cat.hoy} className={inputCls} />
+          <input id="t-fecha" name="fecha" type="date" required value={fechaSel} onChange={(e) => setFechaSel(e.target.value)} className={inputCls} />
         </Field>
         <Field label="Hora" htmlFor="t-hora">
-          <input id="t-hora" name="hora" type="time" required step={300} defaultValue={turno?.hora ?? "16:00"} className={inputCls} />
+          <input id="t-hora" name="hora" type="time" required step={300} value={horaSel} onChange={(e) => setHoraSel(e.target.value)} className={inputCls} />
         </Field>
       </div>
+
+      {conflictos.length > 0 && (
+        <div role="status" className="flex flex-col gap-1 rounded-xl border border-brand/50 bg-brand/10 px-3 py-2.5 text-sm">
+          <b className="text-brand">Ya hay {conflictos.length === 1 ? "un turno" : "turnos"} cerca de ese horario</b>
+          {conflictos.map((c, i) => (
+            <span key={i} className="text-[13px] text-muted tabular-nums">
+              {c.hora} · <b className="text-fg">{c.matricula}</b> — {c.cliente}
+            </span>
+          ))}
+          <span className="text-[13px] text-muted">Podés agendar igual si atienden dos autos a la vez.</span>
+        </div>
+      )}
 
       <div className="flex flex-col gap-2">
         <span className="text-[11px] font-semibold tracking-[0.12em] text-muted uppercase">Servicios</span>
@@ -195,7 +217,7 @@ export function TurnoForm({ turno, fecha, close }: { turno?: TurnoVista; fecha?:
 
       <FormError message={state.error} />
       <button disabled={pending} className={btnPrimaryCls}>
-        {pending ? "Guardando…" : turno ? "Guardar cambios" : "Agendar turno"}
+        {pending ? "Guardando…" : turno ? "Guardar cambios" : conflictos.length ? "Agendar igual" : "Agendar turno"}
       </button>
     </form>
   );
