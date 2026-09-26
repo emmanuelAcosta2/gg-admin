@@ -30,14 +30,14 @@ export default async function Page({ params }: PageProps<"/clientes/[id]">) {
   const turnos = vehiculos.data.length
     ? await supabase
         .from("turnos")
-        .select("id, inicio, estado, medio_pago, vehiculo_id, turno_items(precio_cobrado, categorias(nombre, color), combos(nombre))")
+        .select("id, inicio, estado, medio_pago, vehiculo_id, turno_items(precio_cobrado, categorias!categoria_id(nombre, color), combos!combo_id(nombre), turno_item_categorias(categorias(color)))")
         .in(
           "vehiculo_id",
           vehiculos.data.map((v) => v.id),
         )
         .order("inicio", { ascending: false })
     : { data: [], error: null };
-  if (turnos.error) throw new Error("No se pudo leer el historial.");
+  if (turnos.error) throw new Error(`No se pudo leer el historial: ${turnos.error.message}`);
 
   const conTotal = turnos.data.map((t) => ({ ...t, total: t.turno_items.reduce((s, i) => s + i.precio_cobrado, 0) }));
   const realizados = conTotal.filter((t) => t.estado === "realizado");
@@ -104,7 +104,11 @@ export default async function Page({ params }: PageProps<"/clientes/[id]">) {
                           const nombre = i.combos?.nombre ?? i.categorias?.nombre ?? "Servicio";
                           return (
                             <li key={n} className="flex items-center gap-2">
-                              <span className="size-[9px] flex-none rounded-full" style={{ backgroundColor: i.categorias?.color ?? "#8c919c" }} />
+                              <span className="flex flex-none gap-0.5">
+                                {(i.combos ? i.turno_item_categorias.map((x) => x.categorias?.color) : [i.categorias?.color]).map((color, k) => (
+                                  <span key={k} className="size-[9px] rounded-full" style={{ backgroundColor: color ?? "#8c919c" }} />
+                                ))}
+                              </span>
                               {nombre}
                             </li>
                           );
