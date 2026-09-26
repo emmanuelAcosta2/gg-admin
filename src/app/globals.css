@@ -1,0 +1,46 @@
+@import "tailwindcss";
+
+/* Paleta tomada de los logos: negro, naranja (GG) y amarillo/azul (Germino). */
+@theme inline {
+  --color-canvas: #0d0e11;
+  --color-surface: #15171c;
+  --color-raised: #1d2026;
+  --color-line: #2b2f38;
+  --color-fg: #f1efea;
+  --color-muted: #8c919c;
+  --color-brand: #f28c1b;
+  --color-brand-ink: #1a1004;
+  --color-ok: #45c48b;
+  --color-bad: #e5584f;
+  --font-display: var(--font-barlow-condensed), "Arial Narrow", Impact, sans-serif;
+  --font-sans: var(--font-barlow), system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body {
+  background: var(--color-canvas);
+  color: var(--color-fg);
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-tap-highlight-color: transparent;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+}
+
+/* Franja a cuadros del logo de Germino. */
+.flag {
+  height: 6px;
+  flex: none;
+  background: repeating-conic-gradient(var(--color-fg) 0 25%, var(--color-canvas) 0 50%) 0 0 / 12px 12px;
+  opacity: 0.7;
+  border-block: 1px solid var(--color-line);
+}
