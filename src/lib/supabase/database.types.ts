@@ -213,6 +213,9 @@ isOneToOne: false
                            },
 "guardar_combo":
 { Args: { "p_activo": boolean,"p_categorias": (number)[],"p_id": number,"p_nombre": string,"p_precio": number }; Returns: number
+                           },
+"guardar_turno":
+{ Args: { "p_id": number,"p_inicio": string,"p_items": Json,"p_medio_pago": string,"p_notas": string,"p_vehiculo_id": number }; Returns: number
                            }
           }
           Enums: {
