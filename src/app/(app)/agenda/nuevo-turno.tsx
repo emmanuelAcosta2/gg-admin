@@ -1,7 +1,7 @@
 "use client";
 
 import { Modal } from "@/components/modal";
-import { TurnoForm } from "./turno-form";
+import { TurnoForm } from "@/components/turnos/turno-form";
 
 /** Botón flotante "+ Turno": se apoya sobre la barra inferior en celular y en la esquina en escritorio. */
 export function NuevoTurno({ fecha }: { fecha: string }) {

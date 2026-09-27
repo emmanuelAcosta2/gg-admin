@@ -216,6 +216,9 @@ isOneToOne: false
                            },
 "guardar_turno":
 { Args: { "p_id": number,"p_inicio": string,"p_items": Json,"p_medio_pago": string,"p_notas": string,"p_vehiculo_id": number }; Returns: number
+                           },
+"registro_turnos":
+{ Args: { "p_categoria"?: number,"p_combo"?: number,"p_desde": string,"p_desplazamiento"?: number,"p_hasta": string,"p_limite"?: number }; Returns: Json
                            }
           }
           Enums: {

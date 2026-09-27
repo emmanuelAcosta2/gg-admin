@@ -3,12 +3,10 @@ import Link from "next/link";
 import { PageHeader, Placeholder } from "@/components/page-header";
 import { requireUser } from "@/lib/auth";
 import {
-  aInstante,
   cap,
   coloresDelTurno,
   fechaLarga,
   fechaValida,
-  horaLocal,
   hoyLocal,
   lunesDe,
   nombreDia,
@@ -16,28 +14,16 @@ import {
   numeroDia,
   rangoSemana,
   sumarDias,
-  type TurnoVista,
 } from "@/lib/agenda";
-import { diaLocal, formatFechaHora } from "@/lib/dominio";
+import { cargarCatalogo, turnosEnRango } from "@/lib/data/turnos";
 import { formatPesos } from "@/lib/format";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createClient } from "@/lib/supabase/server";
-import { CatalogoProvider } from "./catalogo";
+import { CatalogoProvider } from "@/components/turnos/catalogo";
 import { NuevoTurno } from "./nuevo-turno";
-import { TurnoCard } from "./turno-card";
+import { TurnoCard } from "@/components/turnos/turno-card";
 
 export const metadata: Metadata = { title: "Agenda" };
-
-const SELECT_TURNOS = `
-  id, inicio, estado, medio_pago, notas,
-  vehiculos ( id, matricula, marca_modelo, tamano, clientes ( id, nombre, telefono ) ),
-  turno_items (
-    tipo, categoria_id, combo_id, precio_cobrado, nota_ajuste,
-    categorias!categoria_id ( nombre, color, precio_referencia ),
-    combos!combo_id ( nombre, precio_referencia ),
-    turno_item_categorias ( categorias ( nombre, color ) )
-  )
-`;
 
 export default async function Page({ searchParams }: PageProps<"/agenda">) {
   if (!isSupabaseConfigured) {
@@ -59,73 +45,7 @@ export default async function Page({ searchParams }: PageProps<"/agenda">) {
   const dias = Array.from({ length: 7 }, (_, i) => sumarDias(lunes, i));
 
   const supabase = await createClient();
-  const [turnosRes, categoriasRes, combosRes, vehiculosRes, clientesRes] = await Promise.all([
-    supabase
-      .from("turnos")
-      .select(SELECT_TURNOS)
-      .gte("inicio", aInstante(lunes, "00:00"))
-      .lt("inicio", aInstante(sumarDias(lunes, 7), "00:00"))
-      .order("inicio"),
-    supabase.from("categorias").select("id, nombre, color, precio_referencia").eq("activa", true).order("nombre"),
-    supabase.from("combos").select("id, nombre, precio_referencia, combo_categorias ( categorias ( color ) )").eq("activo", true).order("nombre"),
-    supabase.from("vehiculos").select("id, matricula, marca_modelo, tamano, cliente_id, clientes ( nombre )").order("matricula"),
-    supabase.from("clientes").select("id, nombre").order("nombre"),
-  ]);
-  for (const r of [turnosRes, categoriasRes, combosRes, vehiculosRes, clientesRes]) {
-    if (r.error) throw new Error(`No se pudo leer la agenda: ${r.error.message}`);
-  }
-
-  const turnos: TurnoVista[] = turnosRes.data!.map((t) => {
-    const items = t.turno_items.map((i) => {
-      const esCombo = i.combo_id !== null;
-      const incluidas = i.turno_item_categorias.map((x) => x.categorias).filter((x) => x !== null);
-      return {
-        tipo: esCombo ? ("combo" as const) : ("servicio" as const),
-        refId: (esCombo ? i.combo_id : i.categoria_id) as number,
-        nombre: (esCombo ? i.combos?.nombre : i.categorias?.nombre) ?? "Servicio",
-        colores: esCombo ? incluidas.map((x) => x.color) : [i.categorias?.color ?? "#8c919c"],
-        incluye: esCombo ? incluidas.map((x) => x.nombre) : [],
-        precio: i.precio_cobrado,
-        referencia: (esCombo ? i.combos?.precio_referencia : i.categorias?.precio_referencia) ?? null,
-        nota: i.nota_ajuste,
-      };
-    });
-    const v = t.vehiculos!;
-    const c = v.clientes!;
-    return {
-      id: t.id,
-      dia: diaLocal(t.inicio),
-      hora: horaLocal(t.inicio),
-      fechaHora: formatFechaHora(t.inicio),
-      estado: t.estado as TurnoVista["estado"],
-      medioPago: t.medio_pago,
-      notas: t.notas,
-      total: items.reduce((s, i) => s + i.precio, 0),
-      vehiculo: { id: v.id, matricula: v.matricula, modelo: v.marca_modelo, tamano: v.tamano },
-      cliente: { id: c.id, nombre: c.nombre, telefono: c.telefono },
-      items,
-    };
-  });
-
-  const catalogo = {
-    hoy,
-    categorias: categoriasRes.data!.map((c) => ({ id: c.id, nombre: c.nombre, color: c.color, precio: c.precio_referencia })),
-    combos: combosRes.data!.map((c) => ({
-      id: c.id,
-      nombre: c.nombre,
-      precio: c.precio_referencia,
-      colores: c.combo_categorias.map((x) => x.categorias?.color).filter((x) => x !== undefined),
-    })),
-    vehiculos: vehiculosRes.data!.map((v) => ({
-      id: v.id,
-      matricula: v.matricula,
-      modelo: v.marca_modelo,
-      tamano: v.tamano,
-      cliente: v.clientes?.nombre ?? "",
-      clienteId: v.cliente_id,
-    })),
-    clientes: clientesRes.data!,
-  };
+  const [turnos, catalogo] = await Promise.all([turnosEnRango(supabase, lunes, sumarDias(lunes, 7)), cargarCatalogo(supabase, hoy)]);
 
   const porDia = new Map(dias.map((d) => [d, turnos.filter((t) => t.dia === d)]));
   const href = (fecha: string, vista = semana ? "semana" : "dia") => `/agenda?vista=${vista}&fecha=${fecha}`;
