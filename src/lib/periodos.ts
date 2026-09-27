@@ -1,4 +1,4 @@
-import { cap, nombreDia, nombreMes, numeroDia, rangoSemana, sumarDias, lunesDe } from "./agenda";
+import { cap, nombreDia, nombreDiaCorto, nombreMes, numeroDia, rangoSemana, sumarDias, lunesDe } from "./agenda";
 
 export const PERIODOS = [
   { id: "dia", etiqueta: "Día" },
@@ -69,3 +69,38 @@ export const ANTERIOR: Record<Periodo, string> = {
   semestre: "el semestre anterior",
   año: "el año anterior",
 };
+
+export function sumarMeses(fecha: string, n: number) {
+  const { y, m, d } = partes(fecha);
+  return iso(y, m + n, d);
+}
+
+export type Bucket = { desde: string; hasta: string; label: string };
+
+/** Divide el período en columnas para el gráfico de barras: por día (semana, mes) o por mes (semestre, año). Un día no se grafica. */
+export function bucketsDe(periodo: Periodo, rango: Rango): Bucket[] {
+  if (periodo === "dia") return [];
+
+  if (periodo === "semana") {
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = sumarDias(rango.desde, i);
+      return { desde: d, hasta: sumarDias(d, 1), label: nombreDiaCorto(d)[0].toUpperCase() };
+    });
+  }
+
+  if (periodo === "mes") {
+    const dias = Math.round((Date.parse(`${rango.hasta}T00:00:00Z`) - Date.parse(`${rango.desde}T00:00:00Z`)) / 86_400_000);
+    return Array.from({ length: dias }, (_, i) => {
+      const d = sumarDias(rango.desde, i);
+      return { desde: d, hasta: sumarDias(d, 1), label: i === 0 || (i + 1) % 5 === 0 ? String(i + 1) : "" };
+    });
+  }
+
+  // semestre y año: un bucket por mes, desde rango.desde (siempre el día 1) hasta rango.hasta.
+  const buckets: Bucket[] = [];
+  for (let cur = rango.desde; cur < rango.hasta; cur = sumarMeses(cur, 1)) {
+    const sig = sumarMeses(cur, 1);
+    buckets.push({ desde: cur, hasta: sig, label: cap(nombreMes(cur).slice(0, 3)) });
+  }
+  return buckets;
+}

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Kpi } from "@/components/kpi";
 import { requireUser } from "@/lib/auth";
 import { formatFechaHora, iniciales, TAMANOS, type Tamano } from "@/lib/dominio";
 import { formatPesos } from "@/lib/format";
@@ -121,14 +122,5 @@ export default async function Page({ params }: PageProps<"/clientes/[id]">) {
         }))}
       />
     </>
-  );
-}
-
-function Kpi({ etiqueta, valor, chico }: { etiqueta: string; valor: string; chico?: boolean }) {
-  return (
-    <div className="flex flex-col gap-1.5 rounded-[10px] bg-raised p-3">
-      <span className="text-[11px] font-semibold tracking-[0.12em] text-muted uppercase">{etiqueta}</span>
-      <b className={`font-display leading-none tabular-nums ${chico ? "text-lg" : "text-2xl"}`}>{valor}</b>
-    </div>
   );
 }

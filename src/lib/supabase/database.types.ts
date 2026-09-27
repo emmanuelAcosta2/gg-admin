@@ -219,6 +219,9 @@ isOneToOne: false
                            },
 "registro_turnos":
 { Args: { "p_categoria"?: number,"p_combo"?: number,"p_desde": string,"p_desplazamiento"?: number,"p_hasta": string,"p_limite"?: number }; Returns: Json
+                           },
+"reporte_detalle":
+{ Args: { "p_desde": string,"p_hasta": string }; Returns: Json
                            }
           }
           Enums: {
