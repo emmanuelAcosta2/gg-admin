@@ -15,7 +15,8 @@ import { Filtro } from "./filtro";
 
 export const metadata: Metadata = { title: "Registro" };
 
-const PAGINA = 60;
+const INICIAL = 10;
+const INCREMENTO = 20;
 const MAX = 600;
 
 type Resultado = { cantidad: number; total: number; ids: number[] };
@@ -39,7 +40,7 @@ export default async function Page({ searchParams }: PageProps<"/registro">) {
   const rango = rangoDe(periodo, fecha);
   const filtro = /^(cat|combo):\d+$/.test(un(sp.filtro) ?? "") ? un(sp.filtro)! : "";
   const [tipoFiltro, idFiltro] = filtro ? filtro.split(":") : [];
-  const limite = Math.min(Math.max(Number(un(sp.limite)) || PAGINA, PAGINA), MAX);
+  const limite = Math.min(Math.max(Number(un(sp.limite)) || INICIAL, INICIAL), MAX);
 
   const supabase = await createClient();
   const [reg, categorias, combos] = await Promise.all([
@@ -145,7 +146,7 @@ export default async function Page({ searchParams }: PageProps<"/registro">) {
           ))}
           {cantidad > turnos.length && limite < MAX && (
             <Link
-              href={href({ limite: limite + PAGINA })}
+              href={href({ limite: limite + INCREMENTO })}
               scroll={false}
               className="inline-flex min-h-11 items-center justify-center rounded-[10px] border border-line bg-raised px-4 font-semibold lg:self-start"
             >
