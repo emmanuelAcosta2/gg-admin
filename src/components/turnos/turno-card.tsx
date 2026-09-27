@@ -33,8 +33,8 @@ export function TurnoCard({ turno, fila }: { turno: TurnoVista; fila?: boolean }
       title={turno.vehiculo.matricula}
       triggerClassName={
         fila
-          ? `flex w-full flex-wrap items-center gap-x-2 gap-y-1.5 rounded-[10px] border border-line bg-raised px-2.5 py-2 text-left lg:bg-raised ${cancelado ? "opacity-50" : ""}`
-          : `flex w-full gap-3 rounded-xl border border-line bg-surface py-3 pr-3.5 pl-3 text-left ${cancelado ? "opacity-55" : ""}`
+          ? `flex w-full min-w-0 flex-wrap items-center gap-x-2 gap-y-1.5 rounded-[10px] border border-line bg-raised px-2.5 py-2 text-left lg:bg-raised ${cancelado ? "opacity-50" : ""}`
+          : `flex w-full min-w-0 gap-3 rounded-xl border border-line bg-surface py-3 pr-3.5 pl-3 text-left ${cancelado ? "opacity-55" : ""}`
       }
       trigger={
         fila ? (
@@ -48,7 +48,7 @@ export function TurnoCard({ turno, fila }: { turno: TurnoVista; fila?: boolean }
           </>
         ) : (
           <>
-            <span className="w-[46px] flex-none pt-0.5 font-display text-[22px] leading-none font-bold tabular-nums">{turno.hora}</span>
+            <span className="w-[72px] flex-none pt-0.5 font-display text-[22px] leading-none font-bold tabular-nums">{turno.hora}</span>
             <Franja turno={turno} />
             <span className="flex min-w-0 flex-1 flex-col gap-1">
               <span className="font-display text-[17px] leading-none font-bold tracking-wide uppercase">{turno.vehiculo.matricula}</span>

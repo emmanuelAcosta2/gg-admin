@@ -55,7 +55,7 @@ export default async function Page({ searchParams }: PageProps<"/clientes">) {
       </Suspense>
 
       {lista.length ? (
-        <ul className="grid gap-2.5 lg:grid-cols-2 xl:grid-cols-3">
+        <ul className="grid grid-cols-1 gap-2.5 lg:grid-cols-2 xl:grid-cols-3">
           {lista.map((c) => {
             const r = porCliente.get(c.id);
             return (

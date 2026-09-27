@@ -137,7 +137,7 @@ export default async function Page({ searchParams }: PageProps<"/registro">) {
                 </h2>
                 <span className="text-[13px] text-muted tabular-nums">{formatPesos(ts.reduce((s, t) => s + t.total, 0))}</span>
               </div>
-              <div className="grid gap-2.5 lg:grid-cols-2">
+              <div className="grid grid-cols-1 gap-2.5 lg:grid-cols-2">
                 {ts.map((t) => (
                   <TurnoCard key={t.id} turno={t} />
                 ))}

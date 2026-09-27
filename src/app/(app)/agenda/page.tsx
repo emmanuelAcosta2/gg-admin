@@ -117,7 +117,7 @@ export default async function Page({ searchParams }: PageProps<"/agenda">) {
             </span>
           </div>
           {delDia.length ? (
-            <div className="grid gap-2.5 lg:grid-cols-2">
+            <div className="grid grid-cols-1 gap-2.5 lg:grid-cols-2">
               {delDia.map((t) => (
                 <TurnoCard key={t.id} turno={t} />
               ))}

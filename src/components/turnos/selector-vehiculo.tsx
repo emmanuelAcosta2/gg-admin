@@ -74,7 +74,7 @@ export function SelectorVehiculo({ valor, onChange }: { valor: number; onChange:
                   onClick={() => elegir(v.id)}
                   className="flex w-full items-center gap-3 rounded-[10px] px-2.5 py-2 text-left hover:bg-surface aria-selected:bg-surface"
                 >
-                  <b className="w-[84px] flex-none font-display text-base tracking-wide uppercase">{v.matricula}</b>
+                  <b className="w-[96px] flex-none font-display text-base tracking-wide uppercase">{v.matricula}</b>
                   <span className="min-w-0 flex-1 truncate text-[13px] text-muted">
                     {v.modelo || "Sin modelo"} — {v.cliente}
                   </span>

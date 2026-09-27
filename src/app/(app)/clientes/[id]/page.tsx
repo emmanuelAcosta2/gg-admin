@@ -81,7 +81,7 @@ export default async function Page({ params }: PageProps<"/clientes/[id]">) {
           <h2 className="font-display text-lg leading-none font-bold tracking-wide uppercase">Vehículos</h2>
           <VehiculoEditor clienteId={c.id} />
         </div>
-        <div className="grid gap-2.5 lg:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-2.5 lg:grid-cols-2 xl:grid-cols-3">
           {vehiculos.data.map((v) => {
             const propios = realizados.filter((t) => t.vehiculo_id === v.id);
             return (

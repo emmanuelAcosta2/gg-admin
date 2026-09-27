@@ -46,7 +46,7 @@ export function Historial({ turnos, vehiculos }: { turnos: TurnoHistorial[]; veh
 
       {lista.length ? (
         <>
-          <div className="grid gap-2.5 lg:grid-cols-2">
+          <div className="grid grid-cols-1 gap-2.5 lg:grid-cols-2">
             {lista.slice(0, visibles).map((t) => (
               <article
                 key={t.id}

@@ -11,7 +11,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
     <div className="flex h-dvh flex-col lg:flex-row">
       <aside className="hidden w-[264px] flex-none flex-col border-r border-line bg-surface lg:flex">
         <div className="px-5 pt-[22px] pb-4">
-          <Brand />
+          <Brand stacked />
         </div>
         <div className="flag" aria-hidden="true" />
         <Nav variant="side" />
