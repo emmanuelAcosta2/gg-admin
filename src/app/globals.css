@@ -12,8 +12,8 @@
   --color-brand-ink: #1a1004;
   --color-ok: #45c48b;
   --color-bad: #e5584f;
-  --font-display: var(--font-barlow-condensed), "Arial Narrow", Impact, sans-serif;
-  --font-sans: var(--font-barlow), system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: var(--font-poppins), system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-sans: var(--font-poppins), system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
 :root {
