@@ -87,7 +87,7 @@ export default async function Page({ params }: PageProps<"/clientes/[id]">) {
             return (
               <div key={v.id} className="flex items-center gap-3 rounded-xl border border-line bg-surface px-3.5 py-3">
                 <div className="min-w-0 flex-1">
-                  <p className="font-display text-lg leading-none font-bold tracking-wide uppercase">{v.matricula}</p>
+                  <p className="font-display text-lg leading-none font-bold tracking-wide uppercase">{v.matricula || "Sin matrícula"}</p>
                   <p className="mt-1 truncate text-[13px] text-muted">
                     {v.marca_modelo || "Sin modelo"} · {TAMANOS[v.tamano as Tamano] ?? v.tamano}
                   </p>
@@ -108,7 +108,7 @@ export default async function Page({ params }: PageProps<"/clientes/[id]">) {
       </section>
 
       <Historial
-        vehiculos={vehiculos.data.map((v) => ({ id: v.id, matricula: v.matricula }))}
+        vehiculos={vehiculos.data.map((v) => ({ id: v.id, matricula: v.matricula, marca_modelo: v.marca_modelo }))}
         turnos={conTotal.map((t) => ({
           id: t.id,
           vehiculoId: t.vehiculo_id,

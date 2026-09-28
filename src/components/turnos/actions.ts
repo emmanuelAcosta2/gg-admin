@@ -131,7 +131,7 @@ export async function buscarConflictos(fecha: string, hora: string, excluirId?: 
   }));
 }
 
-export type VehiculoNuevo = { id: number; matricula: string; modelo: string; tamano: string; cliente: string; clienteId: number };
+export type VehiculoNuevo = { id: number; matricula: string | null; modelo: string; tamano: string; cliente: string; clienteId: number };
 export type AltaRapida = {
   clienteId?: number;
   nombre?: string;
@@ -145,8 +145,7 @@ export type AltaRapida = {
 export async function altaRapida(datos: AltaRapida): Promise<{ error?: string; vehiculo?: VehiculoNuevo }> {
   if (!(await requireUser())) return { error: "Sin sesión." };
 
-  const matricula = normalizarMatricula(datos.matricula ?? "");
-  if (!matricula) return { error: "Poné la matrícula." };
+  const matricula = normalizarMatricula(datos.matricula ?? "") || null;
   if (!(datos.tamano in TAMANOS)) return { error: "Elegí un tamaño válido." };
   const modelo = (datos.marcaModelo ?? "").trim();
   const repetida = "Ya hay un vehículo con esa matrícula.";
@@ -157,21 +156,17 @@ export async function altaRapida(datos: AltaRapida): Promise<{ error?: string; v
   if (!clienteId) {
     const nombre = (datos.nombre ?? "").trim();
     if (!nombre) return { error: "Poné el nombre del cliente." };
+    // El vehículo se inserta siempre abajo, a mano: acá solo se crea el cliente, sin vehículo.
     const { data, error } = await supabase.rpc("crear_cliente", {
       p_nombre: nombre,
       p_telefono: (datos.telefono?.trim() || null) as string,
       p_notas: null as unknown as string,
-      p_matricula: matricula,
-      p_marca_modelo: modelo,
-      p_tamano: datos.tamano,
+      p_matricula: null as unknown as string,
+      p_marca_modelo: null as unknown as string,
+      p_tamano: null as unknown as string,
     });
-    if (error) return { error: error.code === "23505" ? repetida : ERROR_GENERICO };
+    if (error) return { error: ERROR_GENERICO };
     clienteId = data;
-    const v = await supabase.from("vehiculos").select("id, matricula, marca_modelo, tamano, clientes ( nombre )").eq("cliente_id", clienteId).single();
-    if (v.error) return { error: ERROR_GENERICO };
-    revalidatePath("/clientes", "layout");
-    revalidatePath("/agenda");
-    return { vehiculo: { id: v.data.id, matricula: v.data.matricula, modelo: v.data.marca_modelo, tamano: v.data.tamano, cliente: v.data.clientes?.nombre ?? "", clienteId } };
   }
 
   const { data, error } = await supabase

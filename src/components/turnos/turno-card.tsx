@@ -24,13 +24,17 @@ const Franja = ({ turno, horizontal }: { turno: TurnoVista; horizontal?: boolean
 
 const resumen = (t: TurnoVista) => t.items.map((i) => i.nombre).join(" · ");
 
+/** Cuando la matrícula es el único texto que identifica al vehículo (título del modal, fila
+ *  compacta), se usa el modelo como respaldo antes de caer a un genérico. */
+const identificarVehiculo = (v: TurnoVista["vehiculo"]) => v.matricula || v.modelo || "Vehículo";
+
 /** Turno en la agenda: al tocarlo abre el detalle con las acciones. `fila` es la versión compacta de la vista semanal. */
 export function TurnoCard({ turno, fila }: { turno: TurnoVista; fila?: boolean }) {
   const cancelado = turno.estado === "cancelado";
 
   return (
     <Modal
-      title={turno.vehiculo.matricula}
+      title={identificarVehiculo(turno.vehiculo)}
       triggerClassName={
         fila
           ? `flex w-full min-w-0 flex-wrap items-center gap-x-2 gap-y-1.5 rounded-[10px] border border-line bg-raised px-2.5 py-2 text-left lg:bg-raised ${cancelado ? "opacity-50" : ""}`
@@ -43,7 +47,7 @@ export function TurnoCard({ turno, fila }: { turno: TurnoVista; fila?: boolean }
             <Franja turno={turno} horizontal />
             <span className="ml-auto text-[13px] leading-none">{turno.estado === "agendado" ? "●" : turno.estado === "realizado" ? "✓" : "✕"}</span>
             <span className="basis-full text-[12px] leading-snug text-muted lg:basis-full">
-              <b className="text-fg">{turno.vehiculo.matricula}</b> · {resumen(turno)}
+              <b className="text-fg">{identificarVehiculo(turno.vehiculo)}</b> · {resumen(turno)}
             </span>
           </>
         ) : (
@@ -51,7 +55,7 @@ export function TurnoCard({ turno, fila }: { turno: TurnoVista; fila?: boolean }
             <span className="w-[72px] flex-none pt-0.5 font-display text-[22px] leading-none font-bold tabular-nums">{turno.hora}</span>
             <Franja turno={turno} />
             <span className="flex min-w-0 flex-1 flex-col gap-1">
-              <span className="font-display text-[17px] leading-none font-bold tracking-wide uppercase">{turno.vehiculo.matricula}</span>
+              <span className="font-display text-[17px] leading-none font-bold tracking-wide uppercase">{turno.vehiculo.matricula || "Sin matrícula"}</span>
               <span className="truncate text-[13px] text-muted">
                 {turno.vehiculo.modelo} · {turno.cliente.nombre}
               </span>
