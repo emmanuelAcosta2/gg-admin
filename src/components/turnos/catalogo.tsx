@@ -5,7 +5,7 @@ import { createContext, useContext, type ReactNode } from "react";
 export type Catalogo = {
   categorias: { id: number; nombre: string; color: string; precio: number | null }[];
   combos: { id: number; nombre: string; precio: number; colores: string[] }[];
-  vehiculos: { id: number; matricula: string; modelo: string; tamano: string; cliente: string; clienteId: number }[];
+  vehiculos: { id: number; matricula: string | null; modelo: string; tamano: string; cliente: string; clienteId: number }[];
   clientes: { id: number; nombre: string }[];
   hoy: string;
 };

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { PageHeader, Placeholder } from "@/components/page-header";
 import { requireUser } from "@/lib/auth";
-import { iniciales } from "@/lib/dominio";
+import { iniciales, matriculaSinEspacios } from "@/lib/dominio";
 import { formatPesos } from "@/lib/format";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createClient } from "@/lib/supabase/server";
@@ -13,7 +13,6 @@ import { ClienteEditor } from "./cliente-editor";
 export const metadata: Metadata = { title: "Clientes" };
 
 const sinTildes = (s: string) => s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
-const sinEspacios = (s: string) => s.replace(/\s+/g, "").toUpperCase();
 
 export default async function Page({ searchParams }: PageProps<"/clientes">) {
   if (!isSupabaseConfigured) {
@@ -31,7 +30,7 @@ export default async function Page({ searchParams }: PageProps<"/clientes">) {
 
   const supabase = await createClient();
   const [clientes, resumen] = await Promise.all([
-    supabase.from("clientes").select("id, nombre, vehiculos(id, matricula)").order("nombre"),
+    supabase.from("clientes").select("id, nombre, vehiculos(id, matricula, marca_modelo)").order("nombre"),
     supabase.from("v_clientes_resumen").select("cliente_id, facturado, visitas"),
   ]);
   if (clientes.error || resumen.error) throw new Error("No se pudieron leer los clientes.");
@@ -40,7 +39,7 @@ export default async function Page({ searchParams }: PageProps<"/clientes">) {
   const lista = clientes.data.filter((c) => {
     if (!q) return true;
     return (
-      sinTildes(c.nombre).includes(sinTildes(q)) || c.vehiculos.some((v) => sinEspacios(v.matricula).includes(sinEspacios(q)))
+      sinTildes(c.nombre).includes(sinTildes(q)) || c.vehiculos.some((v) => matriculaSinEspacios(v.matricula).includes(matriculaSinEspacios(q)))
     );
   });
 
@@ -70,7 +69,7 @@ export default async function Page({ searchParams }: PageProps<"/clientes">) {
                   <span className="min-w-0 flex-1">
                     <span className="block truncate font-semibold">{c.nombre}</span>
                     <span className="block truncate text-[13px] text-muted">
-                      {c.vehiculos.length ? c.vehiculos.map((v) => v.matricula).join(" · ") : "Sin vehículos"}
+                      {c.vehiculos.length ? c.vehiculos.map((v) => v.matricula || v.marca_modelo || "Sin matrícula").join(" · ") : "Sin vehículos"}
                     </span>
                   </span>
                   <span className="text-right">

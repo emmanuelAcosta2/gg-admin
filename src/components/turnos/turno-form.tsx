@@ -99,7 +99,7 @@ export function TurnoForm({ turno, fecha, close }: { turno?: TurnoVista; fecha?:
           <b className="text-brand">Ya hay {conflictos.length === 1 ? "un turno" : "turnos"} cerca de ese horario</b>
           {conflictos.map((c, i) => (
             <span key={i} className="text-[13px] text-muted tabular-nums">
-              {c.hora} · <b className="text-fg">{c.matricula}</b> — {c.cliente}
+              {c.hora} · <b className="text-fg">{c.matricula || "Sin matrícula"}</b> — {c.cliente}
             </span>
           ))}
           <span className="text-[13px] text-muted">Podés agendar igual si atienden dos autos a la vez.</span>

@@ -8,7 +8,7 @@ import { guardarVehiculo, type FormState } from "./actions";
 
 const nuevoCls = "inline-flex min-h-9 items-center justify-center rounded-[10px] border border-brand bg-brand px-3 text-sm font-semibold text-brand-ink";
 
-export type VehiculoDatos = { id: number; matricula: string; marca_modelo: string; tamano: string };
+export type VehiculoDatos = { id: number; matricula: string | null; marca_modelo: string; tamano: string };
 
 export function VehiculoEditor({ clienteId, vehiculo }: { clienteId: number; vehiculo?: VehiculoDatos }) {
   return (
@@ -32,8 +32,8 @@ function VehiculoForm({ clienteId, vehiculo, close }: { clienteId: number; vehic
     <form action={action} className="flex flex-col gap-4">
       {vehiculo ? <input type="hidden" name="id" value={vehiculo.id} /> : <input type="hidden" name="cliente_id" value={clienteId} />}
       <div className="grid grid-cols-2 gap-3">
-        <Field label="Matrícula" htmlFor="veh-mat">
-          <input id="veh-mat" name="matricula" required autoComplete="off" defaultValue={vehiculo?.matricula} placeholder="SAB 1234" className={`${inputCls} uppercase`} />
+        <Field label="Matrícula (opcional)" htmlFor="veh-mat">
+          <input id="veh-mat" name="matricula" autoComplete="off" defaultValue={vehiculo?.matricula ?? ""} placeholder="SAB 1234" className={`${inputCls} uppercase`} />
         </Field>
         <Field label="Tamaño" htmlFor="veh-tam">
           <select id="veh-tam" name="tamano" defaultValue={vehiculo?.tamano ?? "mediano"} className={inputCls}>

@@ -37,7 +37,7 @@ export async function guardarCliente(_prev: FormState, fd: FormData): Promise<Fo
     return { ok: true };
   }
 
-  const matricula = normalizarMatricula(texto(fd, "matricula"));
+  const matricula = normalizarMatricula(texto(fd, "matricula")) || null;
   const tamano = texto(fd, "tamano") || "mediano";
   if (!esTamano(tamano)) return { error: "Elegí un tamaño válido." };
 
@@ -45,7 +45,7 @@ export async function guardarCliente(_prev: FormState, fd: FormData): Promise<Fo
     p_nombre: nombre,
     p_telefono: telefono as string,
     p_notas: notas as string,
-    p_matricula: matricula,
+    p_matricula: matricula as string,
     p_marca_modelo: texto(fd, "marca_modelo"),
     p_tamano: tamano,
   });
@@ -60,9 +60,8 @@ export async function guardarVehiculo(_prev: FormState, fd: FormData): Promise<F
 
   const id = numero(fd, "id");
   const clienteId = numero(fd, "cliente_id");
-  const matricula = normalizarMatricula(texto(fd, "matricula"));
+  const matricula = normalizarMatricula(texto(fd, "matricula")) || null;
   const tamano = texto(fd, "tamano");
-  if (!matricula) return { error: "Poné la matrícula." };
   if (!esTamano(tamano)) return { error: "Elegí un tamaño válido." };
   const fila = { matricula, marca_modelo: texto(fd, "marca_modelo"), tamano };
 

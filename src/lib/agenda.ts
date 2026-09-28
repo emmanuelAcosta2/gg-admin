@@ -64,7 +64,7 @@ export type TurnoVista = {
   medioPago: string | null;
   notas: string | null;
   total: number;
-  vehiculo: { id: number; matricula: string; modelo: string; tamano: string };
+  vehiculo: { id: number; matricula: string | null; modelo: string; tamano: string };
   cliente: { id: number; nombre: string; telefono: string | null };
   items: ItemVista[];
 };

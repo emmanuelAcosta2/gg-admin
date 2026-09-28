@@ -15,13 +15,23 @@ export type TurnoHistorial = {
 
 const PAGINA = 6;
 
+/** Etiqueta de un vehículo cuando no hay una tarjeta con el modelo al lado: matrícula, o el
+ *  modelo si no tiene, para no mostrar el mismo "Sin matrícula" en más de un vehículo. */
+const etiquetaVehiculo = (v: { matricula: string | null; marca_modelo: string }) => v.matricula || v.marca_modelo || "Sin matrícula";
+
 /** Historial del cliente: filtra por vehículo y muestra de a 6 turnos para no alargar la página. */
-export function Historial({ turnos, vehiculos }: { turnos: TurnoHistorial[]; vehiculos: { id: number; matricula: string }[] }) {
+export function Historial({
+  turnos,
+  vehiculos,
+}: {
+  turnos: TurnoHistorial[];
+  vehiculos: { id: number; matricula: string | null; marca_modelo: string }[];
+}) {
   const [vehiculo, setVehiculo] = useState<number | null>(null);
   const [visibles, setVisibles] = useState(PAGINA);
 
   const lista = vehiculo === null ? turnos : turnos.filter((t) => t.vehiculoId === vehiculo);
-  const matriculaDe = new Map(vehiculos.map((v) => [v.id, v.matricula]));
+  const etiquetaDe = new Map(vehiculos.map((v) => [v.id, etiquetaVehiculo(v)]));
 
   return (
     <section className="flex flex-col gap-3">
@@ -38,7 +48,7 @@ export function Historial({ turnos, vehiculos }: { turnos: TurnoHistorial[]; veh
           </Chip>
           {vehiculos.map((v) => (
             <Chip key={v.id} activo={vehiculo === v.id} onClick={() => { setVehiculo(v.id); setVisibles(PAGINA); }}>
-              {v.matricula}
+              {etiquetaVehiculo(v)}
             </Chip>
           ))}
         </div>
@@ -55,7 +65,7 @@ export function Historial({ turnos, vehiculos }: { turnos: TurnoHistorial[]; veh
                 <div className="min-w-0 flex-1">
                   <p className="text-[13px] text-muted">
                     {t.fecha}
-                    {vehiculos.length > 1 && <span className="ml-2 font-semibold text-fg">{matriculaDe.get(t.vehiculoId)}</span>}
+                    {vehiculos.length > 1 && <span className="ml-2 font-semibold text-fg">{etiquetaDe.get(t.vehiculoId)}</span>}
                   </p>
                   <ul className="mt-1 flex flex-col gap-0.5 text-sm">
                     {t.items.map((i, n) => (

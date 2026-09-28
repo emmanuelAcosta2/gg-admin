@@ -152,13 +152,13 @@ isOneToOne: false
                   ]
                 },"vehiculos": {
                   Row: {
-                    "cliente_id": number,"creado_en": string,"id": number,"marca_modelo": string,"matricula": string,"owner_id": string,"tamano": string
+                    "cliente_id": number,"creado_en": string,"id": number,"marca_modelo": string,"matricula": string | null,"owner_id": string,"tamano": string
                   }
                   Insert: {
-                    "cliente_id": number,"creado_en"?: string,"id"?: never,"marca_modelo"?: string,"matricula": string,"owner_id"?: string,"tamano"?: string
+                    "cliente_id": number,"creado_en"?: string,"id"?: never,"marca_modelo"?: string,"matricula"?: string | null,"owner_id"?: string,"tamano"?: string
                   }
                   Update: {
-                    "cliente_id"?: number,"creado_en"?: string,"id"?: never,"marca_modelo"?: string,"matricula"?: string,"owner_id"?: string,"tamano"?: string
+                    "cliente_id"?: number,"creado_en"?: string,"id"?: never,"marca_modelo"?: string,"matricula"?: string | null,"owner_id"?: string,"tamano"?: string
                   }
                   Relationships: [
                     {
